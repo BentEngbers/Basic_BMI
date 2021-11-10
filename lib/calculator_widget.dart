@@ -8,6 +8,25 @@ import 'm_text_field_widget.dart';
 
 const idealBMI = 25.0;
 
+class HeightBox extends StatelessWidget {
+  final Widget widget;
+  final double height;
+  const HeightBox(this.widget, {required this.height, Key? key})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      child: Center(child: widget),
+      height: height,
+    );
+  }
+}
+
+List<Widget> CenterList(List<Widget> widgetList) {
+  return widgetList.map((widget) => Center(child: widget)).toList();
+}
+
 class CalculatorWidget extends ConsumerWidget {
   const CalculatorWidget({Key? key}) : super(key: key);
 
@@ -37,49 +56,55 @@ class CalculatorWidget extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final weight = ref.watch(valueProvider(TextFieldKind.weight)).state;
     final length = ref.watch(valueProvider(TextFieldKind.length)).state;
+    final tableHeight = MediaQuery.of(context).size.height / 2.5;
     return Scaffold(
       appBar: AppBar(title: const Text("Basic BMI calculator")),
-      body: SizedBox(
-        height: MediaQuery.of(context).size.height / 3,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            Column(
-              children: [
-                Text("FOO"),
-                Text(
-                  displayBMI(length: length, weight: weight),
-                ),
-                Text(idealBMI.toStringAsFixed(1))
-              ],
+      body: Table(
+        border: TableBorder.all(),
+        defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+        children: <TableRow>[
+          TableRow(
+              children: CenterList([
+            HeightBox(
+              Container(),
+              height: tableHeight / 3,
             ),
-            Column(
-              children: [
-                const Text("Length"),
-                const Text("Weight"),
-                const Text("BMI")
-              ],
+            const Text("Length"),
+            Padding(
+              padding: const EdgeInsets.all(0),
+              child: SizedBox(
+                  width: 200,
+                  child: MTextFieldWidget(kind: TextFieldKind.length)),
             ),
-            Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(0),
-                  child: SizedBox(
-                      width: 200,
-                      child: MTextFieldWidget(kind: TextFieldKind.length)),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(0),
-                  child: SizedBox(
-                      width: 200,
-                      child: MTextFieldWidget(
-                        kind: TextFieldKind.weight,
-                      )),
-                ),
-              ],
+          ])),
+          TableRow(
+              children: CenterList([
+            HeightBox(
+              Text(displayIdealWeight(length: length)),
+              height: tableHeight / 3,
             ),
-          ],
-        ),
+            const Text("Weight"),
+            Padding(
+              padding: const EdgeInsets.all(0),
+              child: SizedBox(
+                  width: 200,
+                  child: MTextFieldWidget(
+                    kind: TextFieldKind.weight,
+                  )),
+            ),
+          ])),
+          TableRow(
+              children: CenterList([
+            HeightBox(
+              Text(idealBMI.toStringAsFixed(1)),
+              height: tableHeight / 3,
+            ),
+            const Text("BMI"),
+            Text(
+              displayBMI(length: length, weight: weight),
+            ),
+          ]))
+        ],
       ),
     );
   }

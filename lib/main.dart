@@ -1,4 +1,5 @@
 import 'package:basic_bmi/calculator_widget.dart';
+import 'package:basic_bmi/calculator_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,8 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 void main() {
   //Disable rotation: https://www.kindacode.com/article/how-to-disable-landscape-mode-in-flutter/
   WidgetsFlutterBinding.ensureInitialized();
-  SystemChrome.setPreferredOrientations(
-      [DeviceOrientation.portraitUp]);
+  SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   runApp(const ProviderScope(child: MyApp()));
 }
 
