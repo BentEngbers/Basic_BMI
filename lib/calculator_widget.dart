@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fpdart/fpdart.dart';
 
 import 'm_text_field_widget.dart';
+import 'utils.dart';
 
 const idealBMI = 25.0;
 
@@ -23,45 +24,41 @@ class HeightBox extends StatelessWidget {
   }
 }
 
-List<Widget> CenterList(List<Widget> widgetList) {
-  return widgetList.map((widget) => Center(child: widget)).toList();
+String displayBMI(
+    {required Option<double> length, required Option<double> weight}) {
+  return combineOptions(length, weight).match(
+      (tuple) =>
+          calculateBMI(lengthValue: tuple.first, weightValue: tuple.second)
+              .toStringAsFixed(1),
+      () => "");
 }
 
 class CalculatorWidget extends ConsumerWidget {
   const CalculatorWidget({Key? key}) : super(key: key);
 
-  double calculateBMI(
-          {required double lengthValue, required double weightValue}) =>
-      weightValue / (pow(lengthValue / 100, 2));
-  double calculateIdealWeight({required double lengthValue}) {
-    return idealBMI * (pow(lengthValue / 100, 2));
-  }
-
-  String displayBMI(
-          {required Option<double> length, required Option<double> weight}) =>
-      length.match(
-          (lengthValue) => weight.match(
-              (weightValue) => calculateBMI(
-                      lengthValue: lengthValue, weightValue: weightValue)
+  String displayIdealWeight(
+          {required Option<double> length, required Option<double> bmi}) =>
+      combineOptions(length, bmi).match(
+          (tuple) =>
+              calculateWeight(lengthValue: tuple.first, bmi: tuple.second)
                   .toStringAsFixed(1),
-              () => ""),
           () => "");
-
-  String displayIdealWeight({required Option<double> length}) => length.match(
-      (lengthValue) =>
-          calculateIdealWeight(lengthValue: lengthValue).toStringAsFixed(1),
-      () => "");
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final weight = ref.watch(valueProvider(TextFieldKind.weight)).state;
-    final length = ref.watch(valueProvider(TextFieldKind.length)).state;
+    final weight = ref.watch(weightProvider).state;
+    final length = ref.watch(lengthProvider).state;
+    final bmi = ref.watch(bmiProvider).state;
     final tableHeight = MediaQuery.of(context).size.height / 2.5;
     return Scaffold(
-      appBar: AppBar(title: const Text("Basic BMI calculator")),
+      appBar: AppBar(title: const Center(child: Text("Basic BMI calculator"))),
       body: Table(
-        border: TableBorder.all(),
         defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+        // columnWidths: const {
+        //   1: IntrinsicColumnWidth(flex: 0.4),
+        //   2: IntrinsicColumnWidth(flex: 0.2),
+        //   3: IntrinsicColumnWidth(flex: 0.4)
+        // },
         children: <TableRow>[
           TableRow(
               children: CenterList([
@@ -71,32 +68,39 @@ class CalculatorWidget extends ConsumerWidget {
             ),
             const Text("Length"),
             Padding(
-              padding: const EdgeInsets.all(0),
-              child: SizedBox(
-                  width: 200,
-                  child: MTextFieldWidget(kind: TextFieldKind.length)),
+              padding: const EdgeInsets.all(8),
+              child: MTextFieldWidget(
+                provider: lengthControllerProvider,
+                suffixText: "cm",
+              ),
             ),
           ])),
           TableRow(
               children: CenterList([
             HeightBox(
-              Text(displayIdealWeight(length: length)),
+              Text("${displayIdealWeight(length: length, bmi: bmi)} kg"),
               height: tableHeight / 3,
             ),
             const Text("Weight"),
             Padding(
-              padding: const EdgeInsets.all(0),
-              child: SizedBox(
-                  width: 200,
-                  child: MTextFieldWidget(
-                    kind: TextFieldKind.weight,
-                  )),
+              padding: const EdgeInsets.all(8),
+              child: MTextFieldWidget(
+                provider: weightControllerProvider,
+                suffixText: "kg",
+              ),
             ),
           ])),
           TableRow(
               children: CenterList([
             HeightBox(
-              Text(idealBMI.toStringAsFixed(1)),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: MTextFieldWidget(
+                  provider: bmiControllerProvider,
+                  resetToDefault: () => ref.read(bmiControllerProvider).text =
+                      initialValueBMI.toStringAsFixed(0),
+                ),
+              ),
               height: tableHeight / 3,
             ),
             const Text("BMI"),

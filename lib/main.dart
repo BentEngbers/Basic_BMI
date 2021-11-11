@@ -1,5 +1,4 @@
 import 'package:basic_bmi/calculator_widget.dart';
-import 'package:basic_bmi/calculator_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -29,7 +28,7 @@ class MyApp extends StatelessWidget {
         // or simply save your changes to "hot reload" in a Flutter IDE).
         // Notice that the counter didn't reset back to zero; the application
         // is not restarted.
-        textTheme: TextTheme(bodyText2: TextStyle(fontSize: 25)),
+        textTheme: const TextTheme(bodyText2: TextStyle(fontSize: 23)),
         primarySwatch: Colors.blue,
       ),
       home: const CalculatorWidget(),

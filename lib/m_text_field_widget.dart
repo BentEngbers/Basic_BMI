@@ -4,67 +4,85 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-final valueProvider =
-    StateProvider.family<Option<double>, TextFieldKind>((ref, kind) {
-  final isLength = kind == TextFieldKind.length;
-  final provider = isLength ? lengthStringProvider : weightStringProvider;
-  final inputValue =
-      double.tryParse(ref.watch(provider).state.replaceAll(RegExp(r','), '.'));
-  if (inputValue == null) {
-    return const None();
-  }
-  return Some(inputValue);
-}, dependencies: [weightProvider, lengthProvider]);
+Option<double> stringToDouble(String input) =>
+    Option.fromNullable(double.tryParse(input.replaceAll(RegExp(r','), '.')));
+const initialValueBMI = 25.0;
 
-final lengthStringProvider = StateProvider<String>((ref) {
-  return "";
+final lengthProvider = StateProvider<Option<double>>((ref) {
+  return const None();
 });
-final weightStringProvider = StateProvider<String>((ref) {
-  return "";
+final weightProvider = StateProvider<Option<double>>((ref) {
+  return const None();
 });
-final lengthProvider = Provider<TextEditingController>((ref) {
+final bmiProvider = StateProvider<Option<double>>((ref) {
+  return const Some(initialValueBMI);
+});
+final lengthControllerProvider = Provider<TextEditingController>((ref) {
   final controller = TextEditingController();
   controller.addListener(() {
-    ref.read(lengthStringProvider).state = controller.text;
+    ref.read(lengthProvider).state = stringToDouble(controller.text);
   });
   return controller;
 });
-final weightProvider = Provider<TextEditingController>((ref) {
+final weightControllerProvider = Provider<TextEditingController>((ref) {
   final controller = TextEditingController();
   controller.addListener(() {
-    ref.read(weightStringProvider).state = controller.text;
+    ref.read(weightProvider).state = stringToDouble(controller.text);
   });
   return controller;
 });
-enum TextFieldKind { length, weight }
+final bmiControllerProvider = Provider<TextEditingController>((ref) {
+  final initialValue = ref
+      .read(bmiProvider)
+      .state
+      .map((initialValue) => initialValue.toStringAsFixed(0))
+      .toNullable();
+  final controller = TextEditingController(text: initialValue);
+  controller.addListener(() {
+    ref.read(bmiProvider).state = stringToDouble(controller.text);
+  });
+  return controller;
+});
 
 class MTextFieldWidget extends HookConsumerWidget {
-  final TextFieldKind kind;
-  bool get isLength => kind == TextFieldKind.length;
+  final String? suffixText;
+  final Function()? resetToDefault;
   final Provider<TextEditingController> provider;
 
-  MTextFieldWidget({required this.kind, Key? key})
-      : provider =
-            kind == TextFieldKind.length ? lengthProvider : weightProvider,
-        super(key: key);
+  const MTextFieldWidget(
+      {required this.provider, this.suffixText, this.resetToDefault, Key? key})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return TextFormField(
-      controller: ref.read(provider),
-      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      inputFormatters: [
-        FilteringTextInputFormatter.allow(RegExp(r"^[0-9]*(.|,)[0-9]*"))
-      ],
-      decoration: InputDecoration(
-          hintText: isLength ? "Length" : "Weight",
-          suffixText: isLength ? "cm" : "kg",
-          suffixIcon: IconButton(
-            onPressed: () {
-              ref.read(provider).clear();
-            },
-            icon: const Icon(Icons.clear),
-          )),
+    return Focus(
+      onFocusChange: (hasFocus) {
+        if (!hasFocus &&
+            ref.read(provider).text.isEmpty &&
+            resetToDefault != null) {
+          resetToDefault!();
+        }
+      },
+      child: TextFormField(
+        controller: ref.read(provider),
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        inputFormatters: [
+          FilteringTextInputFormatter.allow(RegExp(r"^[0-9]*(.|,)[0-9]*"))
+        ],
+        decoration: InputDecoration(
+            hintText: "...",
+            suffixText: suffixText,
+            suffixIcon: IconButton(
+              onPressed: () {
+                if (resetToDefault != null) {
+                  resetToDefault!();
+                } else {
+                  ref.read(provider).clear();
+                }
+              },
+              icon: const Icon(Icons.clear),
+            )),
+      ),
     );
   }
 }
